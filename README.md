@@ -24,9 +24,9 @@ npm link   # symlinks the package globally — exposes the `mite` command for lo
 mite init --api-key <your-api-key> --account <subdomain>
 
 # Map entities to abbreviations
-mite config set-user 219528 HB
-mite config set-customer 179138 BIS
-mite config set-project 88309 SS
+mite config set-user 219528 xyz
+mite config set-customer 179138 XYZ
+mite config set-project 88309 XYZ_abc
 ```
 
 ## Teams
