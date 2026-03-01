@@ -14,7 +14,7 @@ Read-only CLI for querying [mite.de](https://mite.de) time tracking data, design
 ```bash
 npm install
 npm run build
-npm link
+npm link   # symlinks the package globally — exposes the `mite` command for local dev and makes it callable by agents
 ```
 
 ## Configuration
