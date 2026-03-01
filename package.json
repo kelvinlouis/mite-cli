@@ -1,0 +1,27 @@
+{
+  "name": "@mite/cli",
+  "version": "1.0.0",
+  "description": "Read-only CLI for querying mite.de time tracking data",
+  "main": "./dist/index.js",
+  "type": "module",
+  "bin": {
+    "mite": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --outDir dist",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "format": "npx prettier --write ."
+  },
+  "dependencies": {
+    "commander": "^14.0.0",
+    "conf": "^13.0.1"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.0"
+  }
+}
