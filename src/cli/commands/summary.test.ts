@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 
 const mockGetTimeEntryGroups = vi.fn();
 const mockGetTeam = vi.fn();
+const mockResolveUserIds = vi.fn();
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
@@ -10,6 +11,10 @@ vi.mock('./shared.js', () => ({
   createAuthenticatedClient: () => ({
     getTimeEntryGroups: mockGetTimeEntryGroups,
   }),
+}));
+
+vi.mock('../resolve-users.js', () => ({
+  resolveUserIds: (...args: unknown[]) => mockResolveUserIds(...args),
 }));
 
 vi.mock('../../privacy/index.js', () => ({
@@ -37,6 +42,10 @@ describe('summary command', () => {
   beforeEach(() => {
     mockGetTimeEntryGroups.mockReset();
     mockGetTeam.mockReset();
+    mockResolveUserIds.mockReset();
+    mockResolveUserIds.mockImplementation((_client: unknown, input: string) =>
+      Promise.resolve(input),
+    );
     mockFormatSummaryTable.mockClear();
     mockConsoleLog.mockClear();
     mockConsoleError.mockClear();
@@ -99,7 +108,8 @@ describe('summary command', () => {
     expect(mockConsoleError).toHaveBeenCalledWith(
       'Error: --team and --user are mutually exclusive.',
     );
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 
   it('exits when team does not exist', async () => {
@@ -108,7 +118,8 @@ describe('summary command', () => {
     const command = createSummaryCommand();
     await command.parseAsync(['--team', 'nonexistent'], { from: 'user' });
 
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 
   it('passes default group fields to formatter', async () => {
@@ -140,6 +151,7 @@ describe('summary command', () => {
     expect(mockConsoleError).toHaveBeenCalledWith(
       expect.stringContaining('Invalid group-by field(s): invalid'),
     );
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 });

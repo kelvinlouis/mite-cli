@@ -13,27 +13,27 @@ Read-only CLI for querying mite.de time tracking data. Designed for LLM agent co
 
 ## Available Commands
 
-| Command                                                                             | Purpose                                         |
-| ----------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `mite init --api-key <key> --account <sub>`                                         | Save credentials, validate connection           |
-| `mite config show`                                                                  | Print config (API key masked)                   |
-| `mite config set-user <id> <abbr>`                                                  | Map user ID → abbreviation                      |
-| `mite config set-customer <id> <abbr>`                                              | Map customer ID → abbreviation                  |
-| `mite config set-project <id> <abbr>`                                               | Map project ID → abbreviation                   |
-| `mite config remove-user <id>`                                                      | Remove user mapping                             |
-| `mite config remove-customer <id>`                                                  | Remove customer mapping                         |
-| `mite config remove-project <id>`                                                   | Remove project mapping                          |
-| `mite team list`                                                                    | List all teams and members                      |
-| `mite team create <name> [userIds...]`                                              | Create a team with optional initial members     |
-| `mite team delete <name>`                                                           | Delete a team                                   |
-| `mite team add <name> <userIds...>`                                                 | Add members to a team                           |
-| `mite team remove <name> <userId>`                                                  | Remove a member from a team                     |
-| `mite users`                                                                        | List users (ID, Name, Role)                     |
-| `mite customers`                                                                    | List customers (ID, Name)                       |
-| `mite projects [--customer <id>]`                                                   | List projects (ID, Name, Customer)              |
-| `mite services`                                                                     | List services (ID, Name)                        |
-| `mite summary [--at <period>] [--user <ids>] [--team <name>] [--group-by <fields>]` | Grouped summary (default: user,project,service) |
-| `mite entries (--user <id> \| --team <name>) [--at <period>]`                       | Time entries for a user or team                 |
+| Command                                                                                    | Purpose                                         |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| `mite init --api-key <key> --account <sub>`                                                | Save credentials, validate connection           |
+| `mite config show`                                                                         | Print config (API key masked)                   |
+| `mite config set-user <id> <abbr>`                                                         | Map user ID → abbreviation                      |
+| `mite config set-customer <id> <abbr>`                                                     | Map customer ID → abbreviation                  |
+| `mite config set-project <id> <abbr>`                                                      | Map project ID → abbreviation                   |
+| `mite config remove-user <id>`                                                             | Remove user mapping                             |
+| `mite config remove-customer <id>`                                                         | Remove customer mapping                         |
+| `mite config remove-project <id>`                                                          | Remove project mapping                          |
+| `mite team list`                                                                           | List all teams and members                      |
+| `mite team create <name> [userIds...]`                                                     | Create a team with optional initial members     |
+| `mite team delete <name>`                                                                  | Delete a team                                   |
+| `mite team add <name> <userIds...>`                                                        | Add members to a team                           |
+| `mite team remove <name> <userId>`                                                         | Remove a member from a team                     |
+| `mite users`                                                                               | List users (ID, Name, Role)                     |
+| `mite customers`                                                                           | List customers (ID, Name)                       |
+| `mite projects [--customer <id>]`                                                          | List projects (ID, Name, Customer)              |
+| `mite services`                                                                            | List services (ID, Name)                        |
+| `mite summary [--at <period>] [--user <ids\|names>] [--team <name>] [--group-by <fields>]` | Grouped summary (default: user,project,service) |
+| `mite entries (--user <id\|name> \| --team <name>) [--at <period>] [--note <text>] [--empty-note]` | Time entries for a user or team           |
 
 ### Teams
 
@@ -75,6 +75,7 @@ TypeScript + ESM, Commander.js, conf, tsup, vitest, native fetch.
 - `npm run build` — bundle with tsup (src/index.ts → dist/index.js, ESM)
 - `npm test` — run all tests in watch mode (run after every refactoring or code change)
 - `npm run test:run` — single-pass test run (CI)
+- **Always run `npm run build` after larger refactorings or adjustments** so the user can test immediately
 - `npx vitest run src/api/client.test.ts` — run a single test file
 - `npm run dev` — run from source via ts-node
 - `npm run format` — format all files with Prettier (run before completing any task)

@@ -47,14 +47,15 @@ export class ValidationError extends CLIError {
   }
 }
 
-export function handleError(error: unknown, verbose: boolean = false): never {
+export function handleError(error: unknown, verbose: boolean = false): void {
   if (error instanceof CLIError) {
     console.error(`Error: ${error.message}`);
     if (verbose && error.cause) {
       console.error('\nStack trace:');
       console.error(error.cause.stack);
     }
-    process.exit(error.exitCode);
+    process.exitCode = error.exitCode;
+    return;
   }
 
   if (error instanceof Error) {
@@ -63,9 +64,10 @@ export function handleError(error: unknown, verbose: boolean = false): never {
       console.error('\nStack trace:');
       console.error(error.stack);
     }
-    process.exit(EXIT_CODES.GENERAL_ERROR);
+    process.exitCode = EXIT_CODES.GENERAL_ERROR;
+    return;
   }
 
   console.error('Error:', error);
-  process.exit(EXIT_CODES.GENERAL_ERROR);
+  process.exitCode = EXIT_CODES.GENERAL_ERROR;
 }

@@ -66,47 +66,43 @@ describe('error classes', () => {
 });
 
 describe('handleError', () => {
-  it('exits with CLIError exit code', () => {
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+  it('sets exitCode for CLIError', () => {
     const mockError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     handleError(new ConfigError('not configured'));
 
     expect(mockError).toHaveBeenCalledWith('Error: not configured');
-    expect(mockExit).toHaveBeenCalledWith(EXIT_CODES.CONFIG_ERROR);
+    expect(process.exitCode).toBe(EXIT_CODES.CONFIG_ERROR);
 
-    mockExit.mockRestore();
+    process.exitCode = undefined;
     mockError.mockRestore();
   });
 
-  it('exits with code 1 for generic errors', () => {
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+  it('sets exitCode to 1 for generic errors', () => {
     const mockError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     handleError(new Error('generic'));
 
     expect(mockError).toHaveBeenCalledWith('Error: generic');
-    expect(mockExit).toHaveBeenCalledWith(EXIT_CODES.GENERAL_ERROR);
+    expect(process.exitCode).toBe(EXIT_CODES.GENERAL_ERROR);
 
-    mockExit.mockRestore();
+    process.exitCode = undefined;
     mockError.mockRestore();
   });
 
-  it('exits with code 1 for non-Error values', () => {
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+  it('sets exitCode to 1 for non-Error values', () => {
     const mockError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     handleError('string error');
 
     expect(mockError).toHaveBeenCalledWith('Error:', 'string error');
-    expect(mockExit).toHaveBeenCalledWith(EXIT_CODES.GENERAL_ERROR);
+    expect(process.exitCode).toBe(EXIT_CODES.GENERAL_ERROR);
 
-    mockExit.mockRestore();
+    process.exitCode = undefined;
     mockError.mockRestore();
   });
 
   it('shows stack trace in verbose mode for CLIError with cause', () => {
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     const mockError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const cause = new Error('root');
@@ -115,7 +111,7 @@ describe('handleError', () => {
     expect(mockError).toHaveBeenCalledWith('\nStack trace:');
     expect(mockError).toHaveBeenCalledWith(cause.stack);
 
-    mockExit.mockRestore();
+    process.exitCode = undefined;
     mockError.mockRestore();
   });
 });

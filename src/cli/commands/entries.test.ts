@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 
 const mockGetTimeEntries = vi.fn();
 const mockGetTeam = vi.fn();
+const mockResolveUserIds = vi.fn();
 const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
@@ -10,6 +11,10 @@ vi.mock('./shared.js', () => ({
   createAuthenticatedClient: () => ({
     getTimeEntries: mockGetTimeEntries,
   }),
+}));
+
+vi.mock('../resolve-users.js', () => ({
+  resolveUserIds: (...args: unknown[]) => mockResolveUserIds(...args),
 }));
 
 vi.mock('../../privacy/index.js', () => ({
@@ -33,6 +38,10 @@ describe('entries command', () => {
   beforeEach(() => {
     mockGetTimeEntries.mockReset();
     mockGetTeam.mockReset();
+    mockResolveUserIds.mockReset();
+    mockResolveUserIds.mockImplementation((_client: unknown, input: string) =>
+      Promise.resolve(input),
+    );
     mockConsoleLog.mockClear();
     mockConsoleError.mockClear();
     mockExit.mockClear();
@@ -70,7 +79,8 @@ describe('entries command', () => {
     expect(mockConsoleError).toHaveBeenCalledWith(
       'Error: either --user or --team must be provided.',
     );
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 
   it('exits when --team and --user are both provided', async () => {
@@ -80,7 +90,8 @@ describe('entries command', () => {
     expect(mockConsoleError).toHaveBeenCalledWith(
       'Error: --team and --user are mutually exclusive.',
     );
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 
   it('exits when team does not exist', async () => {
@@ -89,7 +100,8 @@ describe('entries command', () => {
     const command = createEntriesCommand();
     await command.parseAsync(['--team', 'nonexistent'], { from: 'user' });
 
-    expect(mockExit).toHaveBeenCalled();
+    expect(process.exitCode).toBe(5);
+    process.exitCode = undefined;
   });
 
   it('passes at parameter to API', async () => {
@@ -99,5 +111,27 @@ describe('entries command', () => {
     await command.parseAsync(['--user', '1', '--at', 'last_week'], { from: 'user' });
 
     expect(mockGetTimeEntries).toHaveBeenCalledWith(expect.objectContaining({ at: 'last_week' }));
+  });
+
+  it('passes note parameter to API', async () => {
+    mockGetTimeEntries.mockResolvedValue([]);
+
+    const command = createEntriesCommand();
+    await command.parseAsync(['--user', '1', '--note', 'meeting'], { from: 'user' });
+
+    expect(mockGetTimeEntries).toHaveBeenCalledWith(expect.objectContaining({ note: 'meeting' }));
+  });
+
+  it('filters out entries with non-empty notes when --no-note is used', async () => {
+    mockGetTimeEntries.mockResolvedValue([
+      { id: 1, note: '' },
+      { id: 2, note: 'has a note' },
+      { id: 3, note: '' },
+    ]);
+
+    const command = createEntriesCommand();
+    await command.parseAsync(['--user', '1', '--empty-note'], { from: 'user' });
+
+    expect(mockConsoleLog).toHaveBeenCalledWith('entries:2');
   });
 });

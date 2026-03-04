@@ -2,9 +2,10 @@ import { Command } from 'commander';
 import { createAuthenticatedClient } from './shared.js';
 import { sanitizeTimeEntryGroup } from '../../privacy/index.js';
 import { formatSummaryTable } from '../output.js';
-import { handleError, EXIT_CODES, ValidationError } from '../../utils/errors.js';
+import { handleError, ValidationError } from '../../utils/errors.js';
 import { config } from '../../config/index.js';
 import { DEFAULT_PERIOD, DEFAULT_GROUP_BY, VALID_GROUP_FIELDS } from '../../constants.js';
+import { resolveUserIds } from '../resolve-users.js';
 import type { GroupField } from '../../constants.js';
 
 interface SummaryOptions {
@@ -29,8 +30,7 @@ function parseGroupFields(input: string): GroupField[] {
 
 async function summaryAction(options: SummaryOptions): Promise<void> {
   if (options.team && options.user) {
-    console.error('Error: --team and --user are mutually exclusive.');
-    process.exit(EXIT_CODES.GENERAL_ERROR);
+    throw new ValidationError('--team and --user are mutually exclusive.');
   }
 
   const groupByInput = options.groupBy || DEFAULT_GROUP_BY;
@@ -52,12 +52,11 @@ async function summaryAction(options: SummaryOptions): Promise<void> {
   if (options.team) {
     const teamMembers = config.getTeam(options.team);
     if (!teamMembers) {
-      console.error(`Error: Team "${options.team}" does not exist.`);
-      process.exit(EXIT_CODES.GENERAL_ERROR);
+      throw new ValidationError(`Team "${options.team}" does not exist.`);
     }
     params.user_id = teamMembers.join(',');
   } else if (options.user) {
-    params.user_id = options.user;
+    params.user_id = await resolveUserIds(client, options.user);
   }
 
   const groups = await client.getTimeEntryGroups({
@@ -81,7 +80,7 @@ export function createSummaryCommand(): Command {
     )
     .option('--from <date>', 'Start date (YYYY-MM-DD)')
     .option('--to <date>', 'End date (YYYY-MM-DD)')
-    .option('--user <ids>', 'Comma-separated user IDs')
+    .option('--user <ids>', 'Comma-separated user IDs or names')
     .option('--team <name>', 'Team name (resolves to member user IDs)')
     .option('--group-by <fields>', 'Comma-separated group fields', DEFAULT_GROUP_BY)
     .action(async (options: SummaryOptions) => {

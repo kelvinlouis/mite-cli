@@ -90,6 +90,7 @@ export interface TimeEntryParams {
   to?: string;
   project_id?: string;
   service_id?: string;
+  note?: string;
 }
 
 export interface GroupedTimeEntryParams extends TimeEntryParams {

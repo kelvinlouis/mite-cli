@@ -2,9 +2,10 @@ import { Command } from 'commander';
 import { createAuthenticatedClient } from './shared.js';
 import { sanitizeTimeEntry } from '../../privacy/index.js';
 import { formatEntriesTable, formatTeamEntriesTable } from '../output.js';
-import { handleError, EXIT_CODES } from '../../utils/errors.js';
+import { handleError, ValidationError } from '../../utils/errors.js';
 import { config } from '../../config/index.js';
 import { DEFAULT_PERIOD } from '../../constants.js';
+import { resolveUserIds } from '../resolve-users.js';
 
 interface EntriesOptions {
   user?: string;
@@ -12,17 +13,17 @@ interface EntriesOptions {
   at?: string;
   from?: string;
   to?: string;
+  note?: string;
+  emptyNote?: boolean;
 }
 
 async function entriesAction(options: EntriesOptions): Promise<void> {
   if (options.team && options.user) {
-    console.error('Error: --team and --user are mutually exclusive.');
-    process.exit(EXIT_CODES.GENERAL_ERROR);
+    throw new ValidationError('--team and --user are mutually exclusive.');
   }
 
   if (!options.team && !options.user) {
-    console.error('Error: either --user or --team must be provided.');
-    process.exit(EXIT_CODES.GENERAL_ERROR);
+    throw new ValidationError('either --user or --team must be provided.');
   }
 
   const client = createAuthenticatedClient();
@@ -33,14 +34,12 @@ async function entriesAction(options: EntriesOptions): Promise<void> {
   if (options.team) {
     const teamMembers = config.getTeam(options.team);
     if (!teamMembers) {
-      console.error(`Error: Team "${options.team}" does not exist.`);
-      process.exit(EXIT_CODES.GENERAL_ERROR);
-      return;
+      throw new ValidationError(`Team "${options.team}" does not exist.`);
     }
     userIds = teamMembers.join(',');
     isTeamQuery = true;
   } else {
-    userIds = options.user;
+    userIds = await resolveUserIds(client, options.user!);
   }
 
   const params: Record<string, string | undefined> = {
@@ -59,16 +58,18 @@ async function entriesAction(options: EntriesOptions): Promise<void> {
     at: params.at,
     from: params.from,
     to: params.to,
+    note: options.note,
   });
 
-  const sanitized = entries.map(sanitizeTimeEntry);
+  const filtered = options.emptyNote ? entries.filter((e) => e.note === '') : entries;
+  const sanitized = filtered.map(sanitizeTimeEntry);
   console.log(isTeamQuery ? formatTeamEntriesTable(sanitized) : formatEntriesTable(sanitized));
 }
 
 export function createEntriesCommand(): Command {
   return new Command('entries')
     .description('List time entries for a user or team')
-    .option('--user <id>', 'User ID')
+    .option('--user <id>', 'User ID or name')
     .option('--team <name>', 'Team name (resolves to member user IDs)')
     .option(
       '--at <period>',
@@ -76,6 +77,8 @@ export function createEntriesCommand(): Command {
     )
     .option('--from <date>', 'Start date (YYYY-MM-DD)')
     .option('--to <date>', 'End date (YYYY-MM-DD)')
+    .option('--note <text>', 'Filter entries by note text')
+    .option('--empty-note', 'Show only entries with empty notes')
     .action(async (options: EntriesOptions) => {
       try {
         await entriesAction(options);

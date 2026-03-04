@@ -61,15 +61,19 @@ mite services
 mite summary
 mite summary --at last_week
 mite summary --at last_week --user 219528
+mite summary --user "Hans"          # resolve user by name
+mite summary --user "Hans,219529"   # mix names and IDs
 mite summary --team frontend
 mite summary --group-by customer,project
 
-# Time entries for a user or team
+# Time entries for a user or team (accepts IDs or names)
 mite entries --user 219528
 mite entries --user 219528 --at last_week
 mite entries --user 219528 --from 2024-01-01 --to 2024-01-31
 mite entries --team frontend
 mite entries --team frontend --at last_week
+mite entries --user 219528 --note "meeting"   # filter by note text
+mite entries --user 219528 --empty-note      # show entries with empty notes
 ```
 
 > `--team` and `--user` are mutually exclusive on both `summary` and `entries`.
