@@ -1,7 +1,8 @@
 {
   "name": "@kelvinlouis/mite-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Read-only CLI for querying mite.de time tracking data",
+  "license": "MIT",
   "main": "./dist/index.js",
   "type": "module",
   "bin": {
