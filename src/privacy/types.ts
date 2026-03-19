@@ -1,3 +1,7 @@
+export interface SanitizeOptions {
+  useRealNames?: boolean;
+}
+
 export interface SanitizedTimeEntry {
   id: number;
   minutes: number;

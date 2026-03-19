@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { Command } from 'commander';
 import { ConfigError } from '../../utils/errors.js';
 
 const mockGetApiKey = vi.fn();
@@ -11,7 +12,7 @@ vi.mock('../../config/index.js', () => ({
   },
 }));
 
-const { createAuthenticatedClient } = await import('./shared.js');
+const { createAuthenticatedClient, addDangerouslySkipAliasOption } = await import('./shared.js');
 
 describe('createAuthenticatedClient', () => {
   it('throws ConfigError when API key is not set', () => {
@@ -30,5 +31,19 @@ describe('createAuthenticatedClient', () => {
     mockGetAccount.mockReturnValue('testaccount');
     const client = createAuthenticatedClient();
     expect(client).toBeDefined();
+  });
+});
+
+describe('addDangerouslySkipAliasOption', () => {
+  it('adds --dangerously-skip-alias option to a command', () => {
+    const cmd = addDangerouslySkipAliasOption(new Command('test'));
+    cmd.parse(['--dangerously-skip-alias'], { from: 'user' });
+    expect(cmd.opts().dangerouslySkipAlias).toBe(true);
+  });
+
+  it('defaults to false when flag is not provided', () => {
+    const cmd = addDangerouslySkipAliasOption(new Command('test'));
+    cmd.parse([], { from: 'user' });
+    expect(cmd.opts().dangerouslySkipAlias).toBeUndefined();
   });
 });

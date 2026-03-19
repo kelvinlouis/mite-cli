@@ -7,10 +7,14 @@ const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
+const mockSanitizeTimeEntry = vi.fn();
+
 vi.mock('./shared.js', () => ({
   createAuthenticatedClient: () => ({
     getTimeEntries: mockGetTimeEntries,
   }),
+  addDangerouslySkipAliasOption: (cmd: unknown) =>
+    (cmd as { option: Function }).option('--dangerously-skip-alias'),
 }));
 
 vi.mock('../resolve-users.js', () => ({
@@ -18,7 +22,7 @@ vi.mock('../resolve-users.js', () => ({
 }));
 
 vi.mock('../../privacy/index.js', () => ({
-  sanitizeTimeEntry: (entry: { id: number }) => entry,
+  sanitizeTimeEntry: (...args: unknown[]) => mockSanitizeTimeEntry(...args),
 }));
 
 vi.mock('../output.js', () => ({
@@ -39,6 +43,8 @@ describe('entries command', () => {
     mockGetTimeEntries.mockReset();
     mockGetTeam.mockReset();
     mockResolveUserIds.mockReset();
+    mockSanitizeTimeEntry.mockReset();
+    mockSanitizeTimeEntry.mockImplementation((entry: { id: number }) => entry);
     mockResolveUserIds.mockImplementation((_client: unknown, input: string) =>
       Promise.resolve(input),
     );
@@ -133,5 +139,26 @@ describe('entries command', () => {
     await command.parseAsync(['--user', '1', '--empty-note'], { from: 'user' });
 
     expect(mockConsoleLog).toHaveBeenCalledWith('entries:2');
+  });
+
+  it('passes useRealNames when --dangerously-skip-alias is set', async () => {
+    mockGetTimeEntries.mockResolvedValue([{ id: 1, note: '' }]);
+
+    const command = createEntriesCommand();
+    await command.parseAsync(['--user', '1', '--dangerously-skip-alias'], { from: 'user' });
+
+    expect(mockSanitizeTimeEntry).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ useRealNames: true }),
+    );
+  });
+
+  it('does not pass useRealNames without the flag', async () => {
+    mockGetTimeEntries.mockResolvedValue([{ id: 1, note: '' }]);
+
+    const command = createEntriesCommand();
+    await command.parseAsync(['--user', '1'], { from: 'user' });
+
+    expect(mockSanitizeTimeEntry).toHaveBeenCalledWith(expect.any(Object), undefined);
   });
 });

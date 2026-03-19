@@ -7,10 +7,14 @@ const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 
+const mockSanitizeTimeEntryGroup = vi.fn();
+
 vi.mock('./shared.js', () => ({
   createAuthenticatedClient: () => ({
     getTimeEntryGroups: mockGetTimeEntryGroups,
   }),
+  addDangerouslySkipAliasOption: (cmd: unknown) =>
+    (cmd as { option: Function }).option('--dangerously-skip-alias'),
 }));
 
 vi.mock('../resolve-users.js', () => ({
@@ -18,7 +22,7 @@ vi.mock('../resolve-users.js', () => ({
 }));
 
 vi.mock('../../privacy/index.js', () => ({
-  sanitizeTimeEntryGroup: (group: { minutes: number }) => group,
+  sanitizeTimeEntryGroup: (...args: unknown[]) => mockSanitizeTimeEntryGroup(...args),
 }));
 
 const mockFormatSummaryTable = vi.fn(
@@ -43,6 +47,8 @@ describe('summary command', () => {
     mockGetTimeEntryGroups.mockReset();
     mockGetTeam.mockReset();
     mockResolveUserIds.mockReset();
+    mockSanitizeTimeEntryGroup.mockReset();
+    mockSanitizeTimeEntryGroup.mockImplementation((group: { minutes: number }) => group);
     mockResolveUserIds.mockImplementation((_client: unknown, input: string) =>
       Promise.resolve(input),
     );
@@ -153,5 +159,26 @@ describe('summary command', () => {
     );
     expect(process.exitCode).toBe(5);
     process.exitCode = undefined;
+  });
+
+  it('passes useRealNames when --dangerously-skip-alias is set', async () => {
+    mockGetTimeEntryGroups.mockResolvedValue([{ minutes: 60 }]);
+
+    const command = createSummaryCommand();
+    await command.parseAsync(['--dangerously-skip-alias'], { from: 'user' });
+
+    expect(mockSanitizeTimeEntryGroup).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ useRealNames: true }),
+    );
+  });
+
+  it('does not pass useRealNames without the flag', async () => {
+    mockGetTimeEntryGroups.mockResolvedValue([{ minutes: 60 }]);
+
+    const command = createSummaryCommand();
+    await command.parseAsync([], { from: 'user' });
+
+    expect(mockSanitizeTimeEntryGroup).toHaveBeenCalledWith(expect.any(Object), undefined);
   });
 });

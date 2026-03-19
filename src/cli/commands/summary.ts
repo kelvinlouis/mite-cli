@@ -1,6 +1,7 @@
 import { Command } from 'commander';
-import { createAuthenticatedClient } from './shared.js';
+import { createAuthenticatedClient, addDangerouslySkipAliasOption } from './shared.js';
 import { sanitizeTimeEntryGroup } from '../../privacy/index.js';
+import type { SanitizeOptions } from '../../privacy/index.js';
 import { formatSummaryTable } from '../output.js';
 import { handleError, ValidationError } from '../../utils/errors.js';
 import { config } from '../../config/index.js';
@@ -15,6 +16,7 @@ interface SummaryOptions {
   user?: string;
   team?: string;
   groupBy?: string;
+  dangerouslySkipAlias?: boolean;
 }
 
 function parseGroupFields(input: string): GroupField[] {
@@ -67,12 +69,15 @@ async function summaryAction(options: SummaryOptions): Promise<void> {
     user_id: params.user_id,
   });
 
-  const sanitized = groups.map(sanitizeTimeEntryGroup);
+  const sanitizeOptions: SanitizeOptions | undefined = options.dangerouslySkipAlias
+    ? { useRealNames: true }
+    : undefined;
+  const sanitized = groups.map((g) => sanitizeTimeEntryGroup(g, sanitizeOptions));
   console.log(formatSummaryTable(sanitized, groupFields));
 }
 
 export function createSummaryCommand(): Command {
-  return new Command('summary')
+  const cmd = new Command('summary')
     .description('Weekly summary grouped by user, project, and service')
     .option(
       '--at <period>',
@@ -90,4 +95,5 @@ export function createSummaryCommand(): Command {
         handleError(error);
       }
     });
+  return addDangerouslySkipAliasOption(cmd);
 }

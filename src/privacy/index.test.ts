@@ -121,6 +121,35 @@ describe('privacy', () => {
       expect(result).not.toHaveProperty('updated_at');
     });
 
+    it('uses real names when useRealNames is true', () => {
+      const result = sanitizeTimeEntry(createRawTimeEntry(), { useRealNames: true });
+      expect(result.user_name).toBe('Real Name');
+      expect(result.project_name).toBe('Secret Project');
+      expect(result.customer_name).toBe('Secret Customer');
+      expect(mockAbbreviateUser).not.toHaveBeenCalled();
+      expect(mockAbbreviateProject).not.toHaveBeenCalled();
+      expect(mockAbbreviateCustomer).not.toHaveBeenCalled();
+    });
+
+    it('still strips financial fields when useRealNames is true', () => {
+      const result = sanitizeTimeEntry(createRawTimeEntry(), { useRealNames: true });
+      expect(result).not.toHaveProperty('revenue');
+      expect(result).not.toHaveProperty('hourly_rate');
+    });
+
+    it('handles null project and customer with useRealNames', () => {
+      const raw = {
+        ...createRawTimeEntry(),
+        project_id: null,
+        project_name: '',
+        customer_id: null,
+        customer_name: '',
+      };
+      const result = sanitizeTimeEntry(raw, { useRealNames: true });
+      expect(result.project_name).toBe('-');
+      expect(result.customer_name).toBe('-');
+    });
+
     it('handles null project and customer', () => {
       mockAbbreviateUser.mockReturnValue('HB');
 
@@ -209,6 +238,21 @@ describe('privacy', () => {
       const result = sanitizeTimeEntryGroup(createRawGroup());
       expect(result).not.toHaveProperty('revenue');
     });
+
+    it('uses real names when useRealNames is true', () => {
+      const result = sanitizeTimeEntryGroup(createRawGroup(), { useRealNames: true });
+      expect(result.user_name).toBe('Real User');
+      expect(result.project_name).toBe('Real Project');
+      expect(result.customer_name).toBe('Real Customer');
+      expect(mockAbbreviateUser).not.toHaveBeenCalled();
+      expect(mockAbbreviateProject).not.toHaveBeenCalled();
+      expect(mockAbbreviateCustomer).not.toHaveBeenCalled();
+    });
+
+    it('still strips revenue when useRealNames is true', () => {
+      const result = sanitizeTimeEntryGroup(createRawGroup(), { useRealNames: true });
+      expect(result).not.toHaveProperty('revenue');
+    });
   });
 
   describe('sanitizeUser', () => {
@@ -228,6 +272,12 @@ describe('privacy', () => {
       mockAbbreviateUser.mockReturnValue('HB');
       const result = sanitizeUser(createRawUser());
       expect(result.name).toBe('HB');
+    });
+
+    it('uses real name when useRealNames is true', () => {
+      const result = sanitizeUser(createRawUser(), { useRealNames: true });
+      expect(result.name).toBe('Real Name');
+      expect(mockAbbreviateUser).not.toHaveBeenCalled();
     });
 
     it('preserves user role', () => {
@@ -265,6 +315,12 @@ describe('privacy', () => {
       mockAbbreviateCustomer.mockReturnValue('ACME');
       const result = sanitizeCustomer(createRawCustomer());
       expect(result.name).toBe('ACME');
+    });
+
+    it('uses real name when useRealNames is true', () => {
+      const result = sanitizeCustomer(createRawCustomer(), { useRealNames: true });
+      expect(result.name).toBe('Acme Corporation');
+      expect(mockAbbreviateCustomer).not.toHaveBeenCalled();
     });
 
     it('strips customer note', () => {
@@ -310,6 +366,14 @@ describe('privacy', () => {
       expect(result.customer_name).toBe('ACME');
     });
 
+    it('uses real names when useRealNames is true', () => {
+      const result = sanitizeProject(createRawProject(), { useRealNames: true });
+      expect(result.name).toBe('Secret Project');
+      expect(result.customer_name).toBe('Acme Corporation');
+      expect(mockAbbreviateProject).not.toHaveBeenCalled();
+      expect(mockAbbreviateCustomer).not.toHaveBeenCalled();
+    });
+
     it('strips project budget', () => {
       mockAbbreviateProject.mockReturnValue('SS');
       mockAbbreviateCustomer.mockReturnValue('ACME');
@@ -328,6 +392,13 @@ describe('privacy', () => {
       mockAbbreviateProject.mockReturnValue('SS');
       mockAbbreviateCustomer.mockReturnValue('ACME');
       const result = sanitizeProject(createRawProject());
+      expect(result).not.toHaveProperty('note');
+    });
+
+    it('still strips budget and hourly_rate when useRealNames is true', () => {
+      const result = sanitizeProject(createRawProject(), { useRealNames: true });
+      expect(result).not.toHaveProperty('budget');
+      expect(result).not.toHaveProperty('hourly_rate');
       expect(result).not.toHaveProperty('note');
     });
   });

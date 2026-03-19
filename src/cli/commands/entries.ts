@@ -1,6 +1,7 @@
 import { Command } from 'commander';
-import { createAuthenticatedClient } from './shared.js';
+import { createAuthenticatedClient, addDangerouslySkipAliasOption } from './shared.js';
 import { sanitizeTimeEntry } from '../../privacy/index.js';
+import type { SanitizeOptions } from '../../privacy/index.js';
 import { formatEntriesTable, formatTeamEntriesTable } from '../output.js';
 import { handleError, ValidationError } from '../../utils/errors.js';
 import { config } from '../../config/index.js';
@@ -15,6 +16,7 @@ interface EntriesOptions {
   to?: string;
   note?: string;
   emptyNote?: boolean;
+  dangerouslySkipAlias?: boolean;
 }
 
 async function entriesAction(options: EntriesOptions): Promise<void> {
@@ -61,13 +63,16 @@ async function entriesAction(options: EntriesOptions): Promise<void> {
     note: options.note,
   });
 
+  const sanitizeOptions: SanitizeOptions | undefined = options.dangerouslySkipAlias
+    ? { useRealNames: true }
+    : undefined;
   const filtered = options.emptyNote ? entries.filter((e) => e.note === '') : entries;
-  const sanitized = filtered.map(sanitizeTimeEntry);
+  const sanitized = filtered.map((e) => sanitizeTimeEntry(e, sanitizeOptions));
   console.log(isTeamQuery ? formatTeamEntriesTable(sanitized) : formatEntriesTable(sanitized));
 }
 
 export function createEntriesCommand(): Command {
-  return new Command('entries')
+  const cmd = new Command('entries')
     .description('List time entries for a user or team')
     .option('--user <id>', 'User ID or name')
     .option('--team <name>', 'Team name (resolves to member user IDs)')
@@ -86,4 +91,5 @@ export function createEntriesCommand(): Command {
         handleError(error);
       }
     });
+  return addDangerouslySkipAliasOption(cmd);
 }

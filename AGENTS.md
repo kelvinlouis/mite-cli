@@ -10,30 +10,31 @@ Read-only CLI for querying mite.de time tracking data. Designed for LLM agent co
 - **Never look up real names** — do not attempt to resolve abbreviations to full names
 - **No financial data** — revenue, hourly rates, and budgets are stripped from all output
 - Unmapped entities appear as `User#123`, `Customer#456`, `Project#789`
+- `--dangerously-skip-alias` on `users`, `customers`, `projects`, `entries`, `summary` shows real names instead of abbreviations; financial data remains hidden regardless
 
 ## Available Commands
 
-| Command                                                                                    | Purpose                                         |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| `mite init --api-key <key> --account <sub>`                                                | Save credentials, validate connection           |
-| `mite config show`                                                                         | Print config (API key masked)                   |
-| `mite config set-user <id> <abbr>`                                                         | Map user ID → abbreviation                      |
-| `mite config set-customer <id> <abbr>`                                                     | Map customer ID → abbreviation                  |
-| `mite config set-project <id> <abbr>`                                                      | Map project ID → abbreviation                   |
-| `mite config remove-user <id>`                                                             | Remove user mapping                             |
-| `mite config remove-customer <id>`                                                         | Remove customer mapping                         |
-| `mite config remove-project <id>`                                                          | Remove project mapping                          |
-| `mite team list`                                                                           | List all teams and members                      |
-| `mite team create <name> [userIds...]`                                                     | Create a team with optional initial members     |
-| `mite team delete <name>`                                                                  | Delete a team                                   |
-| `mite team add <name> <userIds...>`                                                        | Add members to a team                           |
-| `mite team remove <name> <userId>`                                                         | Remove a member from a team                     |
-| `mite users`                                                                               | List users (ID, Name, Role)                     |
-| `mite customers`                                                                           | List customers (ID, Name)                       |
-| `mite projects [--customer <id>]`                                                          | List projects (ID, Name, Customer)              |
-| `mite services`                                                                            | List services (ID, Name)                        |
-| `mite summary [--at <period>] [--user <ids\|names>] [--team <name>] [--group-by <fields>]` | Grouped summary (default: user,project,service) |
-| `mite entries (--user <id\|name> \| --team <name>) [--at <period>] [--note <text>] [--empty-note]` | Time entries for a user or team           |
+| Command                                                                                                                       | Purpose                                         |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `mite init --api-key <key> --account <sub>`                                                                                   | Save credentials, validate connection           |
+| `mite config show`                                                                                                            | Print config (API key masked)                   |
+| `mite config set-user <id> <abbr>`                                                                                            | Map user ID → abbreviation                      |
+| `mite config set-customer <id> <abbr>`                                                                                        | Map customer ID → abbreviation                  |
+| `mite config set-project <id> <abbr>`                                                                                         | Map project ID → abbreviation                   |
+| `mite config remove-user <id>`                                                                                                | Remove user mapping                             |
+| `mite config remove-customer <id>`                                                                                            | Remove customer mapping                         |
+| `mite config remove-project <id>`                                                                                             | Remove project mapping                          |
+| `mite team list`                                                                                                              | List all teams and members                      |
+| `mite team create <name> [userIds...]`                                                                                        | Create a team with optional initial members     |
+| `mite team delete <name>`                                                                                                     | Delete a team                                   |
+| `mite team add <name> <userIds...>`                                                                                           | Add members to a team                           |
+| `mite team remove <name> <userId>`                                                                                            | Remove a member from a team                     |
+| `mite users [--dangerously-skip-alias]`                                                                                       | List users (ID, Name, Role)                     |
+| `mite customers [--dangerously-skip-alias]`                                                                                   | List customers (ID, Name)                       |
+| `mite projects [--customer <id>] [--dangerously-skip-alias]`                                                                  | List projects (ID, Name, Customer)              |
+| `mite services`                                                                                                               | List services (ID, Name)                        |
+| `mite summary [--at <period>] [--user <ids\|names>] [--team <name>] [--group-by <fields>] [--dangerously-skip-alias]`         | Grouped summary (default: user,project,service) |
+| `mite entries (--user <id\|name> \| --team <name>) [--at <period>] [--note <text>] [--empty-note] [--dangerously-skip-alias]` | Time entries for a user or team                 |
 
 ### Teams
 
@@ -93,6 +94,10 @@ TypeScript + ESM, Commander.js, conf, tsup, vitest, native fetch.
 - Shared type definitions (exported for use by other modules) must live in a dedicated type file (e.g., `foo.types.ts`); do not mix exported types with function implementations
 - A single type file may contain multiple related types
 - Private types (used only within the file) are fine to keep inline but must be placed at the top of the file, right after import statements — before any variable declarations, constants, or function definitions
+
+## Planning
+
+When creating implementation plans, always structure phases using a TDD approach: each phase should define RED (failing tests first), then GREEN (minimal implementation to pass).
 
 ## TDD Workflow
 

@@ -1,4 +1,4 @@
-# mite-cli
+# @kelvinlouis/mite-cli
 
 Read-only CLI for querying [mite.de](https://mite.de) time tracking data, designed for LLM agent consumption.
 
@@ -9,7 +9,13 @@ Read-only CLI for querying [mite.de](https://mite.de) time tracking data, design
 - Plain markdown table output for easy LLM parsing
 - Two key workflows: team weekly summaries and per-user time entries
 
-## Setup
+## Installation
+
+```bash
+npm install -g @kelvinlouis/mite-cli
+```
+
+## Development Setup
 
 ```bash
 npm install
@@ -74,6 +80,10 @@ mite entries --team frontend
 mite entries --team frontend --at last_week
 mite entries --user 219528 --note "meeting"   # filter by note text
 mite entries --user 219528 --empty-note      # show entries with empty notes
+
+# Show real names instead of aliases (financial data stays hidden)
+mite users --dangerously-skip-alias
+mite entries --user 219528 --dangerously-skip-alias
 ```
 
 > `--team` and `--user` are mutually exclusive on both `summary` and `entries`.
